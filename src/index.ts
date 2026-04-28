@@ -24,7 +24,16 @@ const MySQLStore = MySQLStoreFactory(session as any)
 const sessionStore = new MySQLStore({}, pool as any)
 
 // Middleware
-const isProduction = process.env.NODE_ENV === 'production'
+// Robust production detection:
+// - PM2 ecosystem.config.cjs sets NODE_ENV=production
+// - Render automatically injects RENDER=true
+// - Fallback: FRONTEND_URL starts with https (not localhost)
+const isProduction =
+  process.env.NODE_ENV === 'production' ||
+  process.env.RENDER === 'true' ||
+  (!!process.env.FRONTEND_URL &&
+    process.env.FRONTEND_URL.startsWith('https://') &&
+    !process.env.FRONTEND_URL.includes('localhost'))
 
 // Trust proxy for secure cookies behind Render/Load balancer
 app.set('trust proxy', 1)
