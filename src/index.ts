@@ -14,12 +14,20 @@ import adminRoutes from './routes/admin.js'
 import paymentRoutes from './routes/payments.js'
 import settingsRoutes from './routes/settings.js'
 import { errorHandler } from './middleware/errorHandler.js'
+import MySQLStoreFactory from 'express-mysql-session'
 
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Initialize session store
+const MySQLStore = MySQLStoreFactory(session as any)
+const sessionStore = new MySQLStore({}, pool as any)
+
 // Middleware
 const isProduction = process.env.NODE_ENV === 'production'
+
+// Trust proxy for secure cookies behind Render/Load balancer
+app.set('trust proxy', 1)
 
 // Allowed origins for CORS
 const allowedOrigins = [
@@ -58,9 +66,10 @@ app.use(express.urlencoded({ extended: true }))
 // Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'nutbaba-secret-key-change-in-production',
+  store: sessionStore,
   resave: false,
   saveUninitialized: false,
-  proxy: isProduction, // Trust the reverse proxy
+  proxy: true, // Required for secure cookies behind proxy
   cookie: {
     secure: isProduction, // True for production with HTTPS
     httpOnly: true,
