@@ -178,7 +178,15 @@ router.get('/google/callback',
     failureRedirect: '/login?error=auth_failed',
   }),
   (req, res) => {
-    res.redirect(process.env.FRONTEND_URL || 'http://localhost:5173')
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+    const user = req.user as any
+
+    // Redirect to login page only if Google user needs to set a password
+    if (user && !user.password) {
+      res.redirect(`${frontendUrl}/login`)
+    } else {
+      res.redirect(frontendUrl)
+    }
   }
 )
 
@@ -272,7 +280,7 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
-    
+
     // Store OTP with 10 minute expiry
     otpStore.set(email, {
       otp,
